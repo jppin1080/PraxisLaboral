@@ -10,7 +10,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. CSS EXTREMO PARA TEMA CLARO, KPIS Y FILTROS
+# 2. CSS EXTREMO PARA TEMA CLARO, KPIS, FILTROS Y BOTÓN CORPORATIVO
+# Colores: 2D445D (Azul), A5D0B4 (Verde Praxis), A6764E (Marrón), EFEFF1 (Gris Claro), FFFFFF (Blanco)
 st.markdown("""
     <style>
     /* Forzar fondo claro general */
@@ -31,6 +32,23 @@ st.markdown("""
     ul[data-baseweb="menu"] { background-color: #FFFFFF !important; }
     li[data-baseweb="menu-item"] { color: #2D445D !important; background-color: transparent !important; }
     li[data-baseweb="menu-item"]:hover { background-color: #EFEFF1 !important; }
+
+    /* DISEÑO DEL BOTÓN DE DESCARGA: Verde Praxis Laboral */
+    .stDownloadButton > button {
+        background-color: #A5D0B4 !important; /* Verde Praxis */
+        color: #FFFFFF !important; /* Letras Blancas */
+        border: 2px solid #2D445D !important; /* Borde Azul Corporativo */
+        font-weight: bold !important;
+        border-radius: 8px !important;
+        transition: background-color 0.3s ease, color 0.3s ease; /* Efecto suave */
+    }
+    
+    /* Efecto al pasar el mouse por encima (hover) */
+    .stDownloadButton > button:hover {
+        background-color: #FFFFFF !important; /* Fondo Blanco */
+        color: #2D445D !important; /* Letras Azules Corporativas */
+        border: 2px solid #A5D0B4 !important; /* Borde Verde Praxis */
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -120,99 +138,4 @@ df_filtrado['Nivel_Riesgo'] = df_filtrado['Riesgo_Compuesto_Calculado'].apply(la
 c1, c2, c3, c4 = st.columns(4)
 with c1: st.metric(label="Muestra Analizada", value=f"{len(df_filtrado):,}")
 with c2: st.metric(label="Riesgo Promedio", value=f"{df_filtrado['Riesgo_Compuesto_Calculado'].mean():.1f} pts")
-with c3: 
-    pct_medios = (len(df_filtrado[df_filtrado['Nivel_Riesgo'] == '🟡 Medio']) / len(df_filtrado) * 100) if len(df_filtrado) > 0 else 0
-    st.metric(label="Proporción Medio", value=f"{pct_medios:.1f}%")
-with c4: 
-    pct_criticos = (len(df_filtrado[df_filtrado['Nivel_Riesgo'] == '🔴 Crítico']) / len(df_filtrado) * 100) if len(df_filtrado) > 0 else 0
-    st.metric(label="Proporción Crítico", value=f"{pct_criticos:.1f}%")
-
-st.markdown("### 📊 Mapeo Estratégico y Correlación de Factores")
-
-# 7. GRÁFICOS INTERACTIVOS
-col_g1, col_g2 = st.columns(2)
-color_scale_praxis = ["#A5D0B4", "#A6764E", "#2D445D"] 
-
-with col_g1:
-    if f_estado == 'Todos':
-        st.markdown("**Riesgo Estructural Promedio por Entidad Federativa (Nacional)**")
-        df_plot = df_filtrado.groupby('Entidad_Federativa')['Riesgo_Compuesto_Calculado'].mean().reset_index().sort_values(by='Riesgo_Compuesto_Calculado', ascending=False)
-        y_column = 'Entidad_Federativa'
-        y_title = 'Estado'
-    else:
-        st.markdown(f"**Desglose de Riesgo por Sector Industrial en {f_estado}**")
-        df_plot = df_filtrado.groupby('Sector_Industrial')['Riesgo_Compuesto_Calculado'].mean().reset_index().sort_values(by='Riesgo_Compuesto_Calculado', ascending=False)
-        y_column = 'Sector_Industrial'
-        y_title = 'Sector Industrial'
-
-    fig_bar = px.bar(df_plot, x='Riesgo_Compuesto_Calculado', y=y_column, orientation='h', color='Riesgo_Compuesto_Calculado', color_continuous_scale=color_scale_praxis, labels={'Riesgo_Compuesto_Calculado': 'Puntaje Promedio', y_column: y_title})
-    fig_bar.update_layout(height=700, margin=dict(l=10, r=10, t=10, b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#2D445D'))
-    fig_bar.update_xaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'), showgrid=True, gridcolor='rgba(45,68,93,0.1)')
-    fig_bar.update_yaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'))
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-with col_g2:
-    st.markdown("**Matriz Analítica Integral (Intersección de Riesgos Específicos)**")
-    fig_scat = px.scatter(df_filtrado, x='Score_Trabajo_Infantil_Final', y='Score_Trabajo_Forzoso_Final', color='Nivel_Riesgo', size='Riesgo_Compuesto_Calculado', color_discrete_map={'🔴 Crítico': '#2D445D', '🟡 Medio': '#A6764E', '🟢 Bajo': '#A5D0B4'}, hover_data=['ID_Proveedor', 'Sector_Industrial', 'Eslabon_Cadena', 'USDOL_Alerta'], labels={'Score_Trabajo_Infantil_Final': 'Riesgo Trabajo Infantil', 'Score_Trabajo_Forzoso_Final': 'Riesgo Trabajo Forzoso'})
-    fig_scat.update_layout(height=700, margin=dict(l=10, r=10, t=10, b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#2D445D'))
-    fig_scat.update_xaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'), showgrid=True, gridcolor='rgba(45,68,93,0.1)')
-    fig_scat.update_yaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'), showgrid=True, gridcolor='rgba(45,68,93,0.1)')
-    st.plotly_chart(fig_scat, use_container_width=True)
-
-# 8. TABLA DE DIAGNÓSTICO Y EXPORTACIÓN DE REPORTES (NIVEL 1)
-st.markdown("### 📋 Resultados Holísticos del Diagnóstico de Suministro")
-df_lista = df_filtrado.sort_values(by='Riesgo_Compuesto_Calculado', ascending=False).copy()
-
-def pauta_debida_diligencia_avanzada(row):
-    if 'Crítico' in row['Nivel_Riesgo']: return "ALERTA PRIORITARIA: Auditoría física urgente en sitio." if "Infantil" not in tema_seleccionado else "ALERTA MIRTI: Riesgo de deserción escolar. Verificación de actas."
-    return "Monitoreo Preventivo: Solicitar reportes de nóminas." if 'Medio' in row['Nivel_Riesgo'] else "Cumplimiento Estándar: Actualización bianual."
-
-df_lista['Recomendación Praxis Laboral'] = df_lista.apply(pauta_debida_diligencia_avanzada, axis=1)
-df_vista = df_lista[['ID_Proveedor', 'Entidad_Federativa', 'Sector_Industrial', 'Eslabon_Cadena', 'Riesgo_Compuesto_Calculado', 'Nivel_Riesgo', 'Recomendación Praxis Laboral']]
-
-# Despliegue de la tabla en pantalla
-st.dataframe(df_vista, hide_index=True, use_container_width=True)
-
-# BOTÓN DE DESCARGA EN UN SOLO CLIC (Codificado con utf-8-sig para compatibilidad perfecta con Excel)
-csv_buffer = df_vista.to_csv(index=False).encode('utf-8-sig')
-st.download_button(
-    label="📥 Descargar Reporte de Hallazgos Filtrados (Excel / CSV)",
-    data=csv_buffer,
-    file_name="reporte_debida_diligencia_praxis.csv",
-    mime="text/csv"
-)
-
-# 9. DOCUMENTACIÓN
-st.markdown("---")
-st.markdown("## 📚 Documentación Metodológica y Desagregación de Puntajes")
-col_m1, col_m2 = st.columns(2)
-
-with col_m1:
-    st.markdown("""
-    ### 🛡️ Marco Conceptual Compartido (USDOL ILAB)
-    Ambos modelos integran como variable transversal la **Lista de Bienes Producidos con Trabajo Infantil o Forzoso (USDOL)**. Si el sector coincide, se inyecta un riesgo base de 85 puntos.
-    
-    ### ⛓️ Desagregación por Eslabón (Tiers)
-    Penaliza la opacidad corporativa:
-    * **Tier 3 (Materia Prima):** Suma **90 puntos base** (aislamiento geográfico).
-    * **Tier 2 (Procesamiento/Maquila):** Asigna **70 puntos base**.
-    * **Tier 1 (Ensamble Final):** Reduce a **40 puntos base**.
-    """)
-
-with col_m2:
-    if "Trabajo Infantil" in tema_seleccionado:
-        st.markdown("""
-        ### 📊 Puntaje de Trabajo Infantil (MIRTI + Censo)
-        1. **Alerta Sectorial USDOL (35%):** Presente en lista ILAB = **85 pts**.
-        2. **Marginación del Entorno - Censo (25%):** Rezago Alto = **85 pts**, Medio = **55 pts**, Bajo = **25 pts**.
-        3. **Deserción Escolar - Censo (25%):** Tasa real multiplicada por 4.
-        4. **Vulnerabilidad Operativa - ENOE (15%):** Micro empresas a destajo = **75 pts**.
-        """)
-    else:
-        st.markdown("""
-        ### ⛓️ Puntaje de Trabajo Forzoso (OIT / Walk Free / ENOE)
-        1. **Indicador de Coerción OIT (30%):** Intermediarios = **+50 pts**. Retención salarios/documentos = **+50 pts**.
-        2. **Opacidad del Eslabón (30%):** Tier 3 = **90 pts**, Tier 2 = **70 pts**.
-        3. **Alertas Comerciales USDOL (25%):** Sectores penalizados T-MEC = **85 pts base**.
-        4. **Jornada Abusiva - ENOE (15%):** Predominio de jornadas >48 horas = **85 pts**.
-        """)
+with c3:
