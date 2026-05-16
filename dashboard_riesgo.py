@@ -34,7 +34,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. MOTOR DE GENERACIÓN DE DATOS
+# 3. MOTOR DE GENERACIÓN DE DATOS SIMULADOS
 @st.cache_data
 def generar_dataset_avanzado_mexico():
     np.random.seed(2026)
@@ -71,13 +71,13 @@ def generar_dataset_avanzado_mexico():
 
 df_raw = generar_dataset_avanzado_mexico()
 
-# 4. ENCABEZADO
-st.title("⚖️ Praxis Laboral: Matriz de Diagnóstico y Análisis Operativo")
-st.subheader("Evaluación Multidimensional de Riesgos de Trabajo Infantil y Trabajo Forzoso en Cadenas de Suministro")
+# 4. ENCABEZADO PRINCIPAL
+st.title("⚖️ PRAXIS LABORAL: Matriz de Diagnóstico y Análisis Operativo")
+st.subheader("Evaluación Multidimensional de Riesgos de Derechos Humanos en Cadenas de Suministro")
 st.markdown("---")
 
-# 5. BARRA LATERAL (SWITCH Y FILTROS)
-st.sidebar.markdown("### 🎯 Dimensión de derechos laborales")
+# 5. BARRA LATERAL (TÍTULOS REPLANTEADOS A TONO CONSULTOR)
+st.sidebar.markdown("### 🎯 Dimensión de Derechos Humanos")
 tema_seleccionado = st.sidebar.radio("Selecciona el fenómeno a evaluar:", ("Trabajo Infantil (Eje MIRTI / ENTI / Censo)", "Trabajo Forzoso (Eje OIT / Walk Free / ENOE)"))
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🎛️ Estructura de la Cadena de Valor")
@@ -159,7 +159,7 @@ with col_g2:
     fig_scat.update_yaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'), showgrid=True, gridcolor='rgba(45,68,93,0.1)')
     st.plotly_chart(fig_scat, use_container_width=True)
 
-# 8. TABLA DE DIAGNÓSTICO
+# 8. TABLA DE DIAGNÓSTICO Y EXPORTACIÓN DE REPORTES (NIVEL 1)
 st.markdown("### 📋 Resultados Holísticos del Diagnóstico de Suministro")
 df_lista = df_filtrado.sort_values(by='Riesgo_Compuesto_Calculado', ascending=False).copy()
 
@@ -168,9 +168,21 @@ def pauta_debida_diligencia_avanzada(row):
     return "Monitoreo Preventivo: Solicitar reportes de nóminas." if 'Medio' in row['Nivel_Riesgo'] else "Cumplimiento Estándar: Actualización bianual."
 
 df_lista['Recomendación Praxis Laboral'] = df_lista.apply(pauta_debida_diligencia_avanzada, axis=1)
-st.dataframe(df_lista[['ID_Proveedor', 'Entidad_Federativa', 'Sector_Industrial', 'Eslabon_Cadena', 'Riesgo_Compuesto_Calculado', 'Nivel_Riesgo', 'Recomendación Praxis Laboral']], hide_index=True, use_container_width=True)
+df_vista = df_lista[['ID_Proveedor', 'Entidad_Federativa', 'Sector_Industrial', 'Eslabon_Cadena', 'Riesgo_Compuesto_Calculado', 'Nivel_Riesgo', 'Recomendación Praxis Laboral']]
 
-# 9. DOCUMENTACIÓN CON COMILLAS TRIPLES PARA EVITAR ERRORES
+# Despliegue de la tabla en pantalla
+st.dataframe(df_vista, hide_index=True, use_container_width=True)
+
+# BOTÓN DE DESCARGA EN UN SOLO CLIC (Codificado con utf-8-sig para compatibilidad perfecta con Excel)
+csv_buffer = df_vista.to_csv(index=False).encode('utf-8-sig')
+st.download_button(
+    label="📥 Descargar Reporte de Hallazgos Filtrados (Excel / CSV)",
+    data=csv_buffer,
+    file_name="reporte_debida_diligencia_praxis.csv",
+    mime="text/csv"
+)
+
+# 9. DOCUMENTACIÓN
 st.markdown("---")
 st.markdown("## 📚 Documentación Metodológica y Desagregación de Puntajes")
 col_m1, col_m2 = st.columns(2)
