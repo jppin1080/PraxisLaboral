@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # 2. CSS EXTREMO PARA TEMA CLARO, KPIS, FILTROS Y BOTÓN CORPORATIVO
-# Colores: 2D445D (Azul), A5D0B4 (Verde Praxis), A6764E (Marrón), EFEFF1 (Gris Claro), FFFFFF (Blanco)
+# Colores oficiales Praxis Laboral: 2D445D (Azul), A5D0B4 (Verde), A6764E (Marrón), EFEFF1 (Gris Claro)
 st.markdown("""
     <style>
     /* Forzar fondo claro general */
@@ -33,24 +33,29 @@ st.markdown("""
     li[data-baseweb="menu-item"] { color: #2D445D !important; background-color: transparent !important; }
     li[data-baseweb="menu-item"]:hover { background-color: #EFEFF1 !important; }
 
-    /* DISEÑO DEL BOTÓN DE DESCARGA: Verde Praxis Laboral */
+    /* DISEÑO DEL BOTÓN DE DESCARGA CORPORATIVO */
     .stDownloadButton > button {
         background-color: #A5D0B4 !important; /* Verde Praxis */
         color: #FFFFFF !important; /* Letras Blancas */
-        border: 2px solid #2D445D !important; /* Borde Azul Corporativo */
+        border: 2px solid #2D445D !important; /* Borde Azul */
         font-weight: bold !important;
         border-radius: 8px !important;
-        transition: background-color 0.3s ease, color 0.3s ease; /* Efecto suave */
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
-    /* Efecto al pasar el mouse por encima (hover) */
     .stDownloadButton > button:hover {
-        background-color: #FFFFFF !important; /* Fondo Blanco */
-        color: #2D445D !important; /* Letras Azules Corporativas */
-        border: 2px solid #A5D0B4 !important; /* Borde Verde Praxis */
+        background-color: #FFFFFF !important; /* Fondo Blanco al pasar mouse */
+        color: #2D445D !important; /* Letras Azules */
+        border: 2px solid #A5D0B4 !important; /* Borde Verde */
     }
     </style>
 """, unsafe_allow_html=True)
+
+# Definición del Mapa de Colores Estricto de Praxis Laboral para Gráficos
+palette_map_praxis = {
+    '🔴 Crítico': '#2D445D', # Azul Marino Oscuro
+    '🟡 Medio': '#A6764E',   # Marrón
+    '🟢 Bajo': '#A5D0B4'    # Verde
+}
 
 # 3. MOTOR DE GENERACIÓN DE DATOS SIMULADOS
 @st.cache_data
@@ -89,7 +94,7 @@ def generar_dataset_avanzado_mexico():
 
 df_raw = generar_dataset_avanzado_mexico()
 
-# 4. ENCABEZADO PRINCIPAL
+# 4. ENCABEZADO
 st.title("⚖️ PRAXIS LABORAL: Matriz de Diagnóstico y Análisis Operativo")
 st.subheader("Evaluación Multidimensional de Riesgos de Derechos Humanos en Cadenas de Suministro")
 st.markdown("---")
@@ -132,7 +137,13 @@ else:
     suma = w_usdol + w_tier + w_oit
     df_filtrado['Riesgo_Compuesto_Calculado'] = ((df_filtrado['USDOL_Alerta'].map({'Sí': 85, 'No': 30}) * (w_usdol/suma)) + (df_filtrado['Score_TF_Base'] * ((w_tier + w_oit)/suma))).round(1)
 
-df_filtrado['Nivel_Riesgo'] = df_filtrado['Riesgo_Compuesto_Calculado'].apply(lambda x: '🔴 Crítico' if x >= 70 else ('🟡 Medio' if x >= 40 else '🟢 Bajo'))
+# Función clasificadora de riesgo para uso general
+def clasificar_espectro_completo(score):
+    if score >= 70: return '🔴 Crítico'
+    elif score >= 40: return '🟡 Medio'
+    else: return '🟢 Bajo'
+
+df_filtrado['Nivel_Riesgo'] = df_filtrado['Riesgo_Compuesto_Calculado'].apply(clasificar_espectro_completo)
 
 # 6. KPIS PRINCIPALES
 c1, c2, c3, c4 = st.columns(4)
@@ -147,37 +158,53 @@ with c4:
 
 st.markdown("### 📊 Mapeo Estratégico y Correlación de Factores")
 
-# 7. GRÁFICOS INTERACTIVOS
+# 7. GRÁFICOS INTERACTIVOS (CON PALETA ESTRICTA Y DISCRETA DE PRAXIS)
 col_g1, col_g2 = st.columns(2)
-color_scale_praxis = ["#A5D0B4", "#A6764E", "#2D445D"] 
 
 with col_g1:
+    # LÓGICA DE GRÁFICO CONDICIONAL
     if f_estado == 'Todos':
         st.markdown("**Riesgo Estructural Promedio por Entidad Federativa (Nacional)**")
-        df_plot = df_filtrado.groupby('Entidad_Federativa')['Riesgo_Compuesto_Calculado'].mean().reset_index().sort_values(by='Riesgo_Compuesto_Calculado', ascending=False)
+        df_plot = df_filtrado.groupby('Entidad_Federativa')['Riesgo_Compuesto_Calculado'].mean().reset_index()
         y_column = 'Entidad_Federativa'
         y_title = 'Estado'
     else:
         st.markdown(f"**Desglose de Riesgo por Sector Industrial en {f_estado}**")
-        df_plot = df_filtrado.groupby('Sector_Industrial')['Riesgo_Compuesto_Calculado'].mean().reset_index().sort_values(by='Riesgo_Compuesto_Calculado', ascending=False)
+        df_plot = df_filtrado.groupby('Sector_Industrial')['Riesgo_Compuesto_Calculado'].mean().reset_index()
         y_column = 'Sector_Industrial'
         y_title = 'Sector Industrial'
 
-    fig_bar = px.bar(df_plot, x='Riesgo_Compuesto_Calculado', y=y_column, orientation='h', color='Riesgo_Compuesto_Calculado', color_continuous_scale=color_scale_praxis, labels={'Riesgo_Compuesto_Calculado': 'Puntaje Promedio', y_column: y_title})
-    fig_bar.update_layout(height=700, margin=dict(l=10, r=10, t=10, b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#2D445D'))
+    # CORRECCIÓN DE COLOR: Clasificar el promedio para asignar color discreto
+    df_plot['Nivel_Riesgo_Promedio'] = df_plot['Riesgo_Compuesto_Calculado'].apply(clasificar_espectro_completo)
+    df_plot = df_plot.sort_values(by='Riesgo_Compuesto_Calculado', ascending=False)
+
+    # Gráfico de barras usando color discreto mapeado a la paleta Praxis
+    fig_bar = px.bar(
+        df_plot, 
+        x='Riesgo_Compuesto_Calculado', 
+        y=y_column, 
+        orientation='h', 
+        color='Nivel_Riesgo_Promedio', # Usar el nivel clasificado
+        color_discrete_map=palette_map_praxis, # Aplicar mapa de colores estricto
+        labels={'Riesgo_Compuesto_Calculado': 'Puntaje Promedio', y_column: y_title, 'Nivel_Riesgo_Promedio': 'Nivel de Riesgo'}
+    )
+    # Ajustes de layout para legibilidad
+    fig_bar.update_layout(height=700, margin=dict(l=10, r=10, t=10, b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#2D445D'), showlegend=True, legend_title_text="Nivel de Riesgo Promedio")
     fig_bar.update_xaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'), showgrid=True, gridcolor='rgba(45,68,93,0.1)')
     fig_bar.update_yaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'))
     st.plotly_chart(fig_bar, use_container_width=True)
 
 with col_g2:
     st.markdown("**Matriz Analítica Integral (Intersección de Riesgos Específicos)**")
-    fig_scat = px.scatter(df_filtrado, x='Score_Trabajo_Infantil_Final', y='Score_Trabajo_Forzoso_Final', color='Nivel_Riesgo', size='Riesgo_Compuesto_Calculado', color_discrete_map={'🔴 Crítico': '#2D445D', '🟡 Medio': '#A6764E', '🟢 Bajo': '#A5D0B4'}, hover_data=['ID_Proveedor', 'Sector_Industrial', 'Eslabon_Cadena', 'USDOL_Alerta'], labels={'Score_Trabajo_Infantil_Final': 'Riesgo Trabajo Infantil', 'Score_Trabajo_Forzoso_Final': 'Riesgo Trabajo Forzoso'})
+    # El scatter plot ya usaba color discreto, nos aseguramos de que use el mapa estricto
+    fig_scat = px.scatter(df_filtrado, x='Score_Trabajo_Infantil_Final', y='Score_Trabajo_Forzoso_Final', color='Nivel_Riesgo', size='Riesgo_Compuesto_Calculado', color_discrete_map=palette_map_praxis, hover_data=['ID_Proveedor', 'Sector_Industrial', 'Eslabon_Cadena', 'USDOL_Alerta'], labels={'Score_Trabajo_Infantil_Final': 'Riesgo Trabajo Infantil', 'Score_Trabajo_Forzoso_Final': 'Riesgo Trabajo Forzoso', 'Nivel_Riesgo': 'Nivel de Riesgo Compuesto'})
+    
     fig_scat.update_layout(height=700, margin=dict(l=10, r=10, t=10, b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#2D445D'))
     fig_scat.update_xaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'), showgrid=True, gridcolor='rgba(45,68,93,0.1)')
     fig_scat.update_yaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'), showgrid=True, gridcolor='rgba(45,68,93,0.1)')
     st.plotly_chart(fig_scat, use_container_width=True)
 
-# 8. TABLA DE DIAGNÓSTICO Y EXPORTACIÓN DE REPORTES (NIVEL 1)
+# 8. TABLA DE DIAGNÓSTICO Y EXPORTACIÓN
 st.markdown("### 📋 Resultados Holísticos del Diagnóstico de Suministro")
 df_lista = df_filtrado.sort_values(by='Riesgo_Compuesto_Calculado', ascending=False).copy()
 
@@ -188,10 +215,9 @@ def pauta_debida_diligencia_avanzada(row):
 df_lista['Recomendación Praxis Laboral'] = df_lista.apply(pauta_debida_diligencia_avanzada, axis=1)
 df_vista = df_lista[['ID_Proveedor', 'Entidad_Federativa', 'Sector_Industrial', 'Eslabon_Cadena', 'Riesgo_Compuesto_Calculado', 'Nivel_Riesgo', 'Recomendación Praxis Laboral']]
 
-# Despliegue de la tabla en pantalla
 st.dataframe(df_vista, hide_index=True, use_container_width=True)
 
-# BOTÓN DE DESCARGA EN UN SOLO CLIC (Codificado con utf-8-sig para compatibilidad perfecta con Excel)
+# BOTÓN DE DESCARGA (Excel compatible)
 csv_buffer = df_vista.to_csv(index=False).encode('utf-8-sig')
 st.download_button(
     label="📥 Descargar Reporte de Hallazgos Filtrados (Excel / CSV)",
@@ -200,7 +226,7 @@ st.download_button(
     mime="text/csv"
 )
 
-# 9. DOCUMENTACIÓN CON COMILLAS TRIPLES PARA EVITAR ERRORES
+# 9. DOCUMENTACIÓN
 st.markdown("---")
 st.markdown("## 📚 Documentación Metodológica y Desagregación de Puntajes")
 col_m1, col_m2 = st.columns(2)
