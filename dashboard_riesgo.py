@@ -52,9 +52,9 @@ st.markdown("""
 
 # Definición del Mapa de Colores Estricto de Praxis Laboral para Gráficos
 palette_map_praxis = {
-    '🔴 Crítico': '#2D445D', # Azul Marino Oscuro
-    '🟡 Medio': '#A6764E',   # Marrón
-    '🟢 Bajo': '#A5D0B4'    # Verde
+    'Crítico': '#A5D0B4', #  Verde
+    'Medio': '#A6764E',   # Marrón
+    'Bajo': '#2D445D',  # Azul Marino Oscuro
 }
 
 # 3. MOTOR DE GENERACIÓN DE DATOS SIMULADOS
