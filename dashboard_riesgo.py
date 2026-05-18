@@ -69,38 +69,6 @@ st.markdown("""
         background-color: #EFEFF1 !important; 
     }
 
-    /* ESTILOS DE LA TABLA HTML CORPORATIVA DE PRAXIS */
-    .praxis-table-container {
-        background-color: #FFFFFF;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-    }
-    table.praxis-table {
-        width: 100%;
-        border-collapse: collapse;
-        color: #2D445D;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-    }
-    table.praxis-table th {
-        background-color: #2D445D;
-        color: #FFFFFF !important;
-        font-weight: bold;
-        text-align: left;
-        padding: 12px;
-        border-bottom: 3px solid #A6764E;
-    }
-    table.praxis-table td {
-        padding: 10px 12px;
-        border-bottom: 1px solid #EFEFF1;
-        background-color: #FFFFFF;
-    }
-    table.praxis-table tr:hover td {
-        background-color: #F9F9FB;
-    }
-
     /* BOTÓN DE DESCARGA VERDE PRAXIS */
     .stDownloadButton > button {
         background-color: #A5D0B4 !important;
@@ -271,7 +239,7 @@ with col_g2:
     fig_scat.update_yaxes(tickfont=dict(color='#2D445D'), title_font=dict(color='#2D445D'), showgrid=True, gridcolor='rgba(45,68,93,0.1)')
     st.plotly_chart(fig_scat, use_container_width=True)
 
-# 8. TABLA DE DIAGNÓSTICO EN HTML PURO (Inmune a la inversión de colores del sistema)
+# 8. TABLA DE DIAGNÓSTICO REVERTIDA A COMPONENTE NATIVO INTERACTIVO
 st.markdown("### 📋 Resultados Holísticos del Diagnóstico de Suministro")
 df_lista = df_filtrado.sort_values(by='Riesgo_Compuesto_Calculado', ascending=False).copy()
 
@@ -282,44 +250,19 @@ def pauta_debida_diligencia_avanzada(row):
 df_lista['Recomendación Praxis Laboral'] = df_lista.apply(pauta_debida_diligencia_avanzada, axis=1)
 df_vista = df_lista[['ID_Proveedor', 'Entidad_Federativa', 'Sector_Industrial', 'Eslabon_Cadena', 'Riesgo_Compuesto_Calculado', 'Nivel_Riesgo', 'Recomendación Praxis Laboral']]
 
-# Construcción de la tabla HTML para garantizar fondo blanco permanente y texto oscuro
-html_rows = ""
-for idx, row in df_vista.iterrows():
-    label_riesgo = "🔴 Crítico" if row['Nivel_Riesgo'] == 'Critico' else ("🟡 Medio" if row['Nivel_Riesgo'] == 'Medio' else "🟢 Bajo")
-    html_rows += f"""
-    <tr>
-        <td><b>{row['ID_Proveedor']}</b></td>
-        <td>{row['Entidad_Federativa']}</td>
-        <td>{row['Sector_Industrial']}</td>
-        <td>{row['Eslabon_Cadena']}</td>
-        <td>{row['Riesgo_Compuesto_Calculado']} pts</td>
-        <td>{label_riesgo}</td>
-        <td>{row['Recomendación Praxis Laboral']}</td>
-    </tr>
-    """
+# Mapear las etiquetas para el despliegue limpio y estético en el componente interactivo
+df_vista_display = df_vista.copy()
+df_vista_display['Nivel_Riesgo'] = df_vista_display['Nivel_Riesgo'].map({
+    'Critico': '🔴 Crítico',
+    'Medio': '🟡 Medio',
+    'Bajo': '🟢 Bajo'
+})
 
-html_table = f"""
-<div class="praxis-table-container">
-    <table class="praxis-table">
-        <thead>
-            <tr>
-                <th>ID Proveedor</th>
-                <th>Entidad Federativa</th>
-                <th>Sector Industrial</th>
-                <th>Eslabón Cadena</th>
-                <th>Score Compuesto</th>
-                <th>Nivel Riesgo</th>
-                <th>Recomendación Praxis Laboral</th>
-            </tr>
-        </thead>
-        <tbody>
-            {html_rows}
-        </tbody>
-    </table>
-</div>
-"""
+# Renombrar los encabezados de las columnas para un perfil de entrega de consultoría
+df_vista_display.columns = ['ID Proveedor', 'Entidad Federativa', 'Sector Industrial', 'Eslabón Cadena', 'Score Compuesto', 'Nivel Riesgo', 'Recomendación Praxis Laboral']
 
-st.markdown(html_table, unsafe_allow_html=True)
+# Despliegue nativo interactivo (Inmune a problemas de interpretación de código de texto)
+st.dataframe(df_vista_display, hide_index=True, use_container_width=True)
 
 # BOTÓN DE DESCARGA
 csv_buffer = df_vista.to_csv(index=False).encode('utf-8-sig')
